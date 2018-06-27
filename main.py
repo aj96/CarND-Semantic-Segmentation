@@ -137,6 +137,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     """
     # TODO: Implement function
     sess.run(tf.global_variables_initializer())
+    saver = tf.train.Saver()
     loss_per_epoch = []
     for epoch in range(epochs):
         losses, i = [], 0
@@ -146,14 +147,18 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
                          correct_label: labels,
                          keep_prob: KEEP_PROB,
                          learning_rate: LEARNING_RATE}
+            print("training example %d/98" % i) # 98 training examples
             _, loss = sess.run([train_op, cross_entropy_loss], feed_dict=feed_dict)
             losses.append(loss)
 
         training_loss = sum(losses) / len(losses)
         loss_per_epoch.append(training_loss)
         print(" [-] epoch: %d/%d, loss: %.5f" % (epoch+1, epochs, training_loss))
+    print("saving model")
+    save_path = saver.save(sess, "models/model1.ckpt")
+    print("done saving model")
     return loss_per_epoch
-tests.test_train_nn(train_nn)
+#tests.test_train_nn(train_nn)
 
 
 def run():
@@ -161,7 +166,7 @@ def run():
     image_shape = (160, 576)
     data_dir = './data'
     runs_dir = './runs'
-    tests.test_for_kitti_dataset(data_dir)
+    #tests.test_for_kitti_dataset(data_dir)
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
@@ -170,14 +175,13 @@ def run():
     # You'll need a GPU with at least 10 teraFLOPS to train on.
     #  https://www.cityscapes-dataset.com/
 
-    saver = tf.train.Saver()
+    #saver = tf.train.Saver()
 
     with tf.Session() as sess:
         # Path to vgg model
         vgg_path = os.path.join(data_dir, 'vgg')
         # Create function to get batches
         get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
-
         # OPTIONAL: Augment Images for better results
         #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
 
@@ -193,7 +197,6 @@ def run():
         epochs = EPOCHS
         batch_size = BATCH_SIZE
         loss_per_epoch = train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, image_input, correct_label, keep_prob, learning_rate)
-        save_path = saver.save(sess, "models/model1.ckpt")
 
         # TODO: Save inference data using helper.save_inference_samples
         #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
